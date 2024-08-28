@@ -1,0 +1,41 @@
+<!-- popup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 300px;
+            padding: 10px;
+        }
+        button {
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>Web Scraper</h1>
+    <button id="startScraping">开始抓取</button>
+    <button id="pauseScraping">暂停抓取</button>
+    <div class="progress-container">
+        <div>公司进度: <span id="companyProgress">0</span>/<span id="companyTotal">0</span></div>
+        <div>页面进度: <span id="pageProgress">0</span>/<span id="pageTotal">0</span></div>
+    </div>
+    <textarea id="output" readonly></textarea>
+    <script src="popup.js"></script>
+    <script src="content.js"></script>
+</body>
+</html>
