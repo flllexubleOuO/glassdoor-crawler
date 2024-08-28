@@ -1,38 +1,27 @@
 // popup.js
 
 document.getElementById('startScraping').addEventListener('click', () => {
+    // 获取当前活动的标签页 ID
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.scripting.executeScript({
-            target: { tabId: tabs[0].id },
-            files: ['content.js']
-        }, () => {
-            // 注入成功后发送消息
-            chrome.tabs.sendMessage(tabs[0].id, { action: "scrape" }, (response) => {
-                console.log("Response from content script:", response); 
-                document.getElementById('output').value = "开始抓取内容...\n";
-                if (response && response.data) {
-                    document.getElementById('output').value += response.data;
-                } else {
-                    document.getElementById('output').value = '无法抓取内容\n';
-                }
-            });
-        });
+        const activeTabId = tabs[0].id; // 获取当前活动标签页的 ID
+        chrome.runtime.sendMessage({ action: 'startScraping', tabId: activeTabId });
     });
 });
-//暂停抓取
-document.getElementById('pauseScraping').addEventListener('click', () => {
-    document.getElementById('output').value += "\nScraping paused.";
-});
 
+
+document.getElementById('pauseScraping').addEventListener('click', () => {
+    // 通知背景脚本停止抓取任务
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const activeTabId = tabs[0].id;
+        chrome.runtime.sendMessage({ action: 'stopScraping', tabId: activeTabId });
+    });
+});
 
 // 接收来自后台或内容脚本的消息
 chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'updateProgress') {
         if (message.progress === '总公司数') {
             document.getElementById('companyTotal').innerText = message.data;
-        }
-        if (message.progress === '总页面数量') {
-            document.getElementById('pageTotal').innerText = message.data;
         }
         if (message.progress === '公司抓取进度更新'){
             document.getElementById('companyProgress').innerText = message.data;
