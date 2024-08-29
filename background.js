@@ -2,6 +2,8 @@
 console.log("Background script running");
 let scrapingActive = false;
 let scrapingReviewActive = false;
+let currentReviewIndex = 0;
+let reviewUrls = [];
 
 // 处理来自 popup.js 的消息
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
@@ -16,36 +18,47 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
     if (message.action === 'logCompanyData') {
 
-        const url = `http://localhost:5131/api/GlassDoor/UploadGlassDoorCompany` + 
-        `?companyName=${message.companyName}&companyLogo=${message.companyLogo}` + 
-        `&companyRating=${message.companyRating}&companyLocation=${message.companyLocation}` + 
-        `&companySize=${message.companySize}&companyIndustry=${message.companyIndustry}` + 
-        `&companyDescription=${message.companyDescription}&companyReviewUrl=${message.companyReviewUrl}` + 
-        `&companySalaryUrl=${message.companySalaryUrl}`;;
+        // const url = `http://localhost:5131/api/GlassDoor/UploadGlassDoorCompany` + 
+        // `?companyName=${message.companyName}&companyLogo=${message.companyLogo}` + 
+        // `&companyRating=${message.companyRating}&companyLocation=${message.companyLocation}` + 
+        // `&companySize=${message.companySize}&companyIndustry=${message.companyIndustry}` + 
+        // `&companyDescription=${message.companyDescription}&companyReviewUrl=${message.companyReviewUrl}` + 
+        // `&companySalaryUrl=${message.companySalaryUrl}`;;
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Accept': '*/*'
-            },
-            body: ''  
-        });
+        // const response = await fetch(url, {
+        //     method: 'POST',
+        //     headers: {
+        //         'Accept': '*/*'
+        //     },
+        //     body: ''  
+        // });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // if (!response.ok) {
+        //     throw new Error(`HTTP error! status: ${response.status}`);
+        // }
     }
     if (message.action === 'getScrapingStatus') {
         sendResponse({ scrapingActive: scrapingActive });
     }
     if(message.action === 'startScrapingReview'){
         scrapingReviewActive = true;
-        chrome.storage.local.set({ 'scrapingReviewActive': true });  // 存储状态
         startScrapingReview(message.tabId);
+        chrome.storage.local.set({ 'scrapingReviewActive': true });
     }
     else if (message.action === 'stopScrapingReview') {
         scrapingReviewActive = false;
-        chrome.storage.local.set({ 'scrapingReviewActive': false });  // 存储状态
+        chrome.storage.local.set({ 'scrapingReviewActive': false });
+    }
+    if(message.action === 'getCurrentUrl'){
+        if(currentReviewIndex >= reviewUrls.length){
+            sendResponse({state:"FINISHED"});
+            return;
+        }
+        else{
+            sendResponse({url: reviewUrls[currentReviewIndex]});
+            currentReviewIndex++;
+        }
+
     }
 });
 
@@ -63,7 +76,22 @@ function startScraping(tabId) {
     }
 }
 
-function scrapeScrapingReview(tabId){
+async function startScrapingReview(tabId){
+    const response = await fetch('http://localhost:5131/api/GlassDoor/GetReviewUrls', {
+        method: 'GET',
+        headers: {
+            'Accept': '*/*',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    reviewUrls = data.result.data;
+    
+
     if(scrapingReviewActive){
         chrome.scripting.executeScript({
             target: { tabId: tabId },

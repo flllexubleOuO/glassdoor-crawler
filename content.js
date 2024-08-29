@@ -28,10 +28,10 @@ async function scrapePageContent() {
                         scrapePageContent();
                     }, 3000);
                 }
-                else if(currentPageNumber >=400){
+                else if (currentPageNumber >= 400) {
                     return 'done!';
                 }
-                else{
+                else {
                     return 'done!';
                 }
             }
@@ -135,7 +135,103 @@ function sendProgressUpdate(progress, data) {
     });
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-scrapePageContent();
-console.log("Done!");
-chrome.storage.local.clear();
+async function scrapReview() {
+
+    document.querySelector('.ReviewsList_reviewsList__yepAi');
+    const reviewsList = document.querySelector('.ReviewsList_reviewsList__yepAi');
+    const paginationElement = document.querySelector('.PaginationContainer_paginationCount__8BbqK');
+
+    const textContent = paginationElement.textContent;
+    let reviewPageCount = 5;
+    // 使用正则表达式提取数字
+    const match = textContent.match(/of\s([\d,]+)/);
+
+    if (match && match[1]) {
+        // 移除逗号，并将字符串转换为数字
+        const totalReviews = parseInt(match[1].replace(/,/g, ''), 10);
+        // 计算总页数
+        const realPageCount = Math.ceil(totalReviews / 10);
+        if (realPageCount < reviewPageCount) {
+            reviewPageCount = realPageCount;
+        }
+    }
+    for (let currentReviewIndex = 1; currentReviewIndex <= reviewPageCount; currentReviewIndex++) {
+        const reviewDetailsElements = document.querySelectorAll('[data-test="review-details-container"]');
+
+
+        reviewDetailsElements.forEach(async element => {
+            const employerHeader = document.querySelector('p.employer-header_employerHeader__bcVFG.employer-header_header__bB4IL');
+            const rating = element.querySelector('.review-details_overallRating__VDxCx');
+
+            // 选中Pros和Cons两段评语
+            const pros = element.querySelector('[data-test="review-text-pros"]');
+            const cons = element.querySelector('[data-test="review-text-cons"]');
+
+            // 选中职位名称
+            const position = element.querySelector('.review-details_employee__5iA6v');
+
+            // 选中雇佣细节
+            const employmentDetails = element.querySelector('.review-details_employeeDetails__BvAwX');
+
+            // 选中雇佣位置
+            const location = element.querySelector('.review-details_location__E_Ine');
+
+
+            const value = employerHeader ? employerHeader.textContent : 'Employer name not found';
+            const value1 = rating ? rating.textContent.trim() : 'Rating not found';
+            const value2 = pros ? pros.textContent.trim() : 'Pros not found';
+            const value3 = cons ? cons.textContent.trim() : 'Cons not found';
+            const value4 = position ? position.textContent.trim() : 'Position not found';
+            const value5 = employmentDetails ? employmentDetails.textContent.trim() : 'Employment details not found';
+            const value6 = location ? location.textContent.trim() : 'Location not found';
+
+            const url = `http://localhost:5131/api/GlassDoor/PostReview?employerName=${value}&rating=${value1}&pros=${value2}&cons=${value3}&position=${value4}&employmentDetails=${value5}&location=${value6}`
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': '*/*'
+                },
+                body: ''
+            });
+
+
+        });
+        const nextPageButton = document.querySelector('button.pagination_ListItemButton__bBZi9.pagination_Chevron__GvAkD[data-test="next-page"]');
+
+        if (nextPageButton) {
+            // 点击按钮
+            nextPageButton.click();
+            console.log('Next page button clicked');
+        }
+        await delay(2000);  // 等待 2 秒
+    }
+
+    console.log("5秒前");
+    await delay(5000);  // 等待 5 秒
+    console.log("5秒后");
+    chrome.runtime.sendMessage({ action: 'getCurrentUrl' }, (response) => {
+        if (response.state === "FINISHED") {
+            console.log("Finished scraping reviews.");
+            return;
+        }
+        const reviewUrl = response.url;
+        window.location.href = reviewUrl;
+    });
+}
+
+chrome.storage.local.get(['scrapingReviewActive'], function (result) {
+    const isActive = result.scrapingReviewActive;
+    console.log('scrapingReviewActive status is:', isActive);
+    if (isActive) {
+        scrapReview();
+    } else {
+        scrapePageContent();
+        console.log("Done!");
+        chrome.storage.local.clear();
+    }
+});
+
