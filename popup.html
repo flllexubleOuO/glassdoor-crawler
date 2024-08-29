@@ -27,13 +27,25 @@
     </style>
 </head>
 <body>
-    <h1>Web Scraper</h1>
+    <h1>GlassDoor crawler</h1>
+    <h1>一阶段之获取公司列表</h1>
     <button id="startScraping">开始抓取</button>
     <button id="pauseScraping">暂停抓取</button>
+    <button id="clear">清除本地数据</button>
     <div class="progress-container">
         <div>公司进度: <span id="companyProgress">0</span>/<span id="companyTotal">0</span></div>
     </div>
     <textarea id="output" readonly></textarea>
+    <h1>二阶段之获取公司评论</h1>
+    <h2>点击启动按钮后会自动获取数据库中的url并进行访问抓取</h2>
+    <button id="startScrapingReview">开始抓取</button>
+    <button id="pauseScrapingReview">暂停抓取</button>
+    <textarea id="outputReview" readonly></textarea>
+
+
+
+
+
     <script src="popup.js"></script>
     <script src="content.js"></script>
 </body>

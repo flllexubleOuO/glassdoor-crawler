@@ -23,8 +23,8 @@ async function scrapePageContent() {
             if (scrapingActive) {
                 const isDisabled = nextPageButton.disabled || nextPageButton.classList.contains('disabled');
                 if (!isDisabled) {
-                    nextPageButton.click();
                     setTimeout(() => {
+                        nextPageButton.click();
                         scrapePageContent();
                     }, 3000);
                 }
